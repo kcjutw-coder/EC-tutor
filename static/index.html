@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>101 電子電路家教系統 | SHAPE 智慧微鷹架引導</title>
+  <meta name="description" content="專為電子電路分析設計的 AI 智慧家教，結合前台題意轉錄確認與 SHAPE 碎步鷹架引導，支援 Gemini 3.1 / 3.5 / 3.7 全系列 Flash 模型。">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- 頂部導覽列 (Navbar) -->
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="brand-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1 class="brand-title">101 電子電路家教系統</h1>
+          <span class="brand-subtitle">SHAPE 微鷹架循序引導</span>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <!-- 模型選擇器 -->
+        <div class="model-selector-wrapper">
+          <label for="modelSelect" class="control-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            模型
+          </label>
+          <div class="select-container">
+            <select id="modelSelect" class="custom-select" title="選擇 Gemini 模型">
+              <option value="gemini-3.1-flash-lite" selected>Gemini 3.1 Flash-Lite (預設)</option>
+              <option value="gemini-3.1-flash">Gemini 3.1 Flash</option>
+              <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash-Lite</option>
+              <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+              <option value="gemini-3.7-flash-lite">Gemini 3.7 Flash-Lite</option>
+              <option value="gemini-3.7-flash">Gemini 3.7 Flash</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash (穩定備用)</option>
+              <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+              <option value="custom">自訂模型名稱...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 自訂模型輸入框 (預設隱藏) -->
+        <div id="customModelWrapper" class="custom-model-wrapper hidden">
+          <input type="text" id="customModelInput" placeholder="輸入模型 ID" class="text-input sm">
+        </div>
+
+        <!-- API Key 設定按鈕 -->
+        <button id="apiKeyBtn" class="btn btn-secondary btn-icon-text" title="設定 Gemini API Key">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 2l-2 2m-1.5 6.1L16 11l-4-4 4.5-4.5a3 3 0 1 1 4.2 4.2L16.2 11z"/>
+            <path d="M15 13l-6 6H5v-4l6-6"/>
+          </svg>
+          <span id="apiKeyBtnLabel">API Key</span>
+          <span id="keyStatusDot" class="status-dot dot-warn" title="未偵測到自訂金鑰"></span>
+        </button>
+
+        <!-- 新對話按鈕 -->
+        <button id="newChatBtn" class="btn btn-secondary btn-icon" title="開啟新解題會話">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+
+        <!-- 深淺色切換 -->
+        <button id="themeToggleBtn" class="btn btn-secondary btn-icon" title="切換深淺外觀">
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 主體內容區 (側邊欄 + 對話畫布) -->
+    <div class="main-container">
+      <!-- 左側教學導航側邊欄 -->
+      <aside class="sidebar">
+        <!-- 家教狀態與階段指示 -->
+        <div class="sidebar-section">
+          <div class="section-title">教學引導進度</div>
+          <div class="tutor-stage-card">
+            <div class="stage-step active" id="stageStep0">
+              <div class="stage-num">0</div>
+              <div class="stage-content">
+                <div class="stage-name">題意轉錄確認</div>
+                <div class="stage-desc">條列已知條件與求值目標</div>
+              </div>
+            </div>
+            <div class="stage-line"></div>
+            <div class="stage-step" id="stageStep1">
+              <div class="stage-num">1</div>
+              <div class="stage-content">
+                <div class="stage-name">SHAPE 微鷹架引導</div>
+                <div class="stage-desc">每次一步、絕不直接爆答案</div>
+              </div>
+            </div>
+            <div class="stage-line"></div>
+            <div class="stage-step" id="stageStep2">
+              <div class="stage-num">2</div>
+              <div class="stage-content">
+                <div class="stage-name">觀念統整與收斂</div>
+                <div class="stage-desc">回顧核心原理與常見盲點</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 快捷思考引導提示 -->
+        <div class="sidebar-section">
+          <div class="section-title">卡住了？點擊發問</div>
+          <div class="quick-chips">
+            <button class="chip-btn" data-text="我不懂這一步的觀念，能用白話解釋背後原理嗎？">
+              <span class="chip-icon">💡</span>【What】觀念意義
+            </button>
+            <button class="chip-btn" data-text="從上一步到這一步，具體是怎麼推導或列式的？">
+              <span class="chip-icon">📐</span>【How】步驟推導
+            </button>
+            <button class="chip-btn" data-text="為什麼這題用這個定理或迴路會比其他方法好？">
+              <span class="chip-icon">🔍</span>【Why】方法選擇
+            </button>
+            <button class="chip-btn" data-text="我算出來的結果卡住了，可以給我一點小提示嗎？">
+              <span class="chip-icon">✨</span>給我小提示
+            </button>
+          </div>
+        </div>
+
+        <!-- 常用電學分析定律備忘錄 -->
+        <div class="sidebar-section">
+          <div class="section-title">電路分析金律</div>
+          <div class="reference-box">
+            <div class="ref-item">
+              <strong>KVL 迴路電壓</strong>
+              <span>封閉迴路電壓降總和等於零</span>
+            </div>
+            <div class="ref-item">
+              <strong>BJT 作用區判定</strong>
+              <span>V_BE ≈ 0.7V 且 V_CE > 0.2V (I_C = β·I_B)</span>
+            </div>
+            <div class="ref-item">
+              <strong>截波二極體導通</strong>
+              <span>陽極電位高於陰極時順偏導通</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="model-badge-info">
+            <span class="badge-label">目前模型</span>
+            <span id="currentModelBadge" class="badge-value">Gemini 3.1 Flash-Lite</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 主要對話畫布 -->
+      <main class="chat-viewport">
+        <!-- 訊息清單 -->
+        <div id="chatMessages" class="chat-messages">
+          <!-- 歡迎與導覽卡片 -->
+          <div class="welcome-card" id="welcomeCard">
+            <div class="welcome-header">
+              <div class="welcome-icon-glow">⚡</div>
+              <h2>歡迎來到 101 電子電路家教</h2>
+              <p>我是你的專屬 AI 電子電路解題教練。我會以<strong>有溫度的台灣家教語氣</strong>，透過 SHAPE 碎步鷹架引導，陪伴你一步一步自己想通答案！</p>
+            </div>
+
+            <div class="features-grid">
+              <div class="feature-item">
+                <div class="feature-icon">📸</div>
+                <h4>拍照上傳題目</h4>
+                <p>支援電路圖圖片辨識，自動拆解電路元件與已知條件進行轉錄確認。</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">🪜</div>
+                <h4>SHAPE 碎步引導</h4>
+                <p>每次只推展一步、三句話內收斂，堅持不劇透答案，培養獨立思考力。</p>
+              </div>
+              <div class="feature-item">
+                <div class="feature-icon">🧭</div>
+                <h4>What-How-Why 導航</h4>
+                <p>卡關時隨時提問觀念、步驟與方法，零壓力掌握電路核心直覺。</p>
+              </div>
+            </div>
+
+            <div class="quick-examples">
+              <span class="examples-label">或是從範例題目開始練習：</span>
+              <div class="example-chips">
+                <button class="example-chip" data-question="如圖所示 BJT 固定偏壓電路，V_CC = 20V, R_B = 1MΩ, R_C = 10kΩ, β = 50, V_BE = 0.7V。求：(1) I_C (2) V_CE (3) 本電路可作良好的線性放大嗎？">
+                  📌 BJT 偏壓分析 (圖 5-2-2)
+                </button>
+                <button class="example-chip" data-question="輸入訊號 V_S 經 10kΩ 連接至 V_O。V_O 並聯兩支路：左支路陽極接 V_O、陰極接 +6V；右支路陰極接 V_O、陽極接 -3V。請畫出輸出對輸入的轉移特性曲線。">
+                  📌 雙向二極體截波電路
+                </button>
+                <button class="example-chip" data-question="請問戴維寧等效電路中的等效電阻 R_th 在求取時，獨立電壓源與獨立電流源分別應如何處理？">
+                  📌 戴維寧等效定理觀念
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部輸入區域 -->
+        <footer class="chat-input-area">
+          <!-- 圖片預覽膠囊 (若有上傳) -->
+          <div id="imagePreviewContainer" class="image-preview-container hidden">
+            <div class="preview-thumbnail-wrapper">
+              <img id="imagePreview" src="" alt="電路題目截圖預覽">
+              <button id="removeImageBtn" class="btn-remove-img" title="移除圖片">✕</button>
+            </div>
+            <span class="preview-hint">已附加電路圖片 (將自動進行多模態題意確認)</span>
+          </div>
+
+          <div class="input-bar">
+            <!-- 檔案上傳按鈕 -->
+            <button id="uploadImageBtn" class="btn btn-icon upload-btn" title="上傳電路題目圖片">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <circle cx="8.5" cy="8.5" r="1.5"/>
+                <polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </button>
+            <input type="file" id="fileInput" accept="image/*" class="hidden">
+
+            <!-- 輸入文字框 -->
+            <textarea
+              id="messageInput"
+              class="message-textarea"
+              placeholder="輸入問題或算式，或貼上電路截圖 (Ctrl+V)..."
+              rows="1"
+            ></textarea>
+
+            <!-- 發送按鈕 / 停止按鈕 -->
+            <button id="sendBtn" class="btn btn-primary btn-icon send-btn" title="送出 (Enter)">
+              <svg class="icon-send" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              <svg class="icon-stop hidden" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="1"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="input-tips">
+            <span>按 <strong>Enter</strong> 送出，<strong>Shift + Enter</strong> 換行 | 支援截圖直接 <strong>Ctrl + V</strong> 貼上</span>
+          </div>
+        </footer>
+      </main>
+    </div>
+
+    <!-- API Key 設定彈出視窗 (Modal) -->
+    <div id="apiKeyModal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>設定 Gemini API Key</h3>
+          <button id="closeModalBtn" class="btn-close-modal">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            輸入您的 Google Gemini API Key 以啟用完整對話與即時串流。金鑰僅儲存在您的瀏覽器本地 (LocalStorage)，不會上傳至任何第三方伺服器。
+          </p>
+          <div class="form-group">
+            <label for="apiKeyInput" class="form-label">Google Gemini API Key</label>
+            <div class="input-with-action">
+              <input
+                type="password"
+                id="apiKeyInput"
+                class="text-input"
+                placeholder="AIzaSy..."
+                autocomplete="off"
+              >
+              <button id="toggleKeyVisibilityBtn" class="btn-eye" title="顯示/隱藏金鑰">👁️</button>
+            </div>
+          </div>
+          <div id="keyVerificationMsg" class="verification-msg hidden"></div>
+          <div class="modal-links">
+            <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer">
+              還沒有金鑰？點此前往 Google AI Studio 免費取得 ↗
+            </a>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="testKeyBtn" class="btn btn-secondary">測試連線</button>
+          <button id="saveKeyBtn" class="btn btn-primary">儲存設定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 圖片點擊放大檢視 Modal -->
+    <div id="imageLightboxModal" class="lightbox-overlay hidden">
+      <div class="lightbox-content">
+        <img id="lightboxImg" src="" alt="放大檢視">
+        <button id="closeLightboxBtn" class="btn-close-lightbox">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JavaScript -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
